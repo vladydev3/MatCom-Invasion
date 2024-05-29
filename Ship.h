@@ -4,6 +4,7 @@ typedef struct
     int x;
     int y;
 }Ship;
+//Prueba
 void DrawShip(Ship*ship)
 {
     // Dibuja la nave en la posición inicial.

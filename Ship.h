@@ -3,8 +3,21 @@ typedef struct
 {
     int x;
     int y;
+    int lives;
 }Ship;
-//Prueba
+void DrawLives(int lives)
+{
+    // Muestra la vida de la nave en la parte superior de la consola como corazones
+    move(0, 0); // Mueve el cursor a la posición (0, 0)
+    clrtoeol(); // Borra la línea actual para evitar residuos de texto previo
+
+    for (int i = 0; i < lives; i++)
+    {
+        addch(ACS_DIAMOND | A_BOLD | COLOR_PAIR(2)); // Dibuja un corazón
+    }
+
+    refresh();
+}
 void DrawShip(Ship*ship)
 {
     // Dibuja la nave en la posición inicial.

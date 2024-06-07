@@ -2,8 +2,7 @@
 #include "Ship.h"
 
 int main() {
-    int x = 10, y = 10; // Coordenadas de la posición inicial de la nave en la pantalla.
-
+    int x=10,y=10;
     // Inicializa ncurses
     initscr(); // Inicia la ventana de la pantalla.
     start_color(); // Inicia el modo de color.
@@ -13,20 +12,14 @@ int main() {
     raw(); // Desactiva el buffering de línea.
     keypad(stdscr, TRUE); // Habilita el uso de teclas especiales como las flechas.
     noecho(); // No muestra los caracteres de entrada en la pantalla.
-    box(stdscr, 0, 0); // Dibuja un recuadro alrededor de la ventana estándar.
-
     // Inicializa la nave
     Ship ship = {x, y, 3}; // Posición inicial y vidas iniciales
-
     // Dibuja la nave y las vidas iniciales
     DrawShip(&ship);
     DrawLives(ship.lives);
-
     // Mueve la nave
     MoveShip(&ship);
-
     // Finaliza ncurses
     endwin();
-
     return 0; // Retorna 0 para indicar que el programa se ejecutó correctamente.
 }

@@ -1,8 +1,21 @@
 #include <ncurses.h>
 #include "Ship.h"
 #include "Shot.h"
+#include "Enemy.h"
+#include <stdlib.h>
+#include <time.h>
 
 int main() {
+    #define MAX_ENEMIES 3
+    srand(time(NULL));
+    Enemy enemies[MAX_ENEMIES];
+    // Inicializa los enemigos
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+    enemies[i].x = i * 10; // Posiciona los enemigos horizontalmente
+    enemies[i].y = 0; // Posiciona los enemigos en la parte superior de la pantalla
+    enemies[i].active = 1; // Marca los enemigos como activos
+    }   
+
     int x = 10, y = 10;
     // Inicializa ncurses
     initscr();
@@ -55,6 +68,24 @@ int main() {
                 DrawLives(ship.lives);
                 // Bucle principal del juego
                 while (1) {
+                    int activeEnemies = 0;
+                    for (int i = 0; i < MAX_ENEMIES; i++) {
+                        if (enemies[i].active) {
+                            activeEnemies++;
+                        }
+                    }
+
+                    if (activeEnemies == 0 && rand() % 100 < 2) { // chance en % de spawnear un enemigo
+                        int i = rand() % MAX_ENEMIES; // elegir un enemigo aleatorio
+                        enemies[i].x = rand() % COLS; // posicion aleatoria en x
+                        enemies[i].y = 0; // empezar en la parte superior de la pantalla
+                        enemies[i].active = 1; // activar el enemigo
+                    }
+
+                    // mover y dibujar los enemigos
+                    for (int i = 0; i < MAX_ENEMIES; i++) {
+                        MoveEnemy(&enemies[i]);
+                    }
                     int ch = getch();
                     if (ch==27)
                     {

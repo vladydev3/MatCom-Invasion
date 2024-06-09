@@ -39,7 +39,7 @@ void DeleteShip(Ship* ship) {
     mvprintw(ship->y + 5, ship->x, "                 ");
 }
 
-void MoveShip(Ship* ship, Shot* shot) {
+void MoveShip(Ship* ship) {
     int ch = getch();
     DeleteShip(ship);
     switch(ch) {

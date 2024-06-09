@@ -8,7 +8,7 @@ typedef struct {
 } Shot;
 
 void Fire(int ship_x, int ship_y, Shot* shot);
-void MoveShot(Shot* shot,int ship_x,int ship_y);
+void MoveShot(Shot* shot);
 void DrawShot(Shot* shot);
 void DeleteShot(Shot *shot);
 

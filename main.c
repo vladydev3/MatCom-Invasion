@@ -4,20 +4,64 @@
 #include "Enemy.h"
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define MAX_ENEMIES 3
+
+// Estructura para pasar datos a la función del hilo
+typedef struct {
+    Ship *ship;
+    Shot *shot;
+    Enemy *enemies;
+} ThreadData;
+
+// Función del hilo para mover los enemigos
+void *moveEnemies(void *data) {
+    Enemy *enemies = ((ThreadData *)data)->enemies;
+    while (1) {
+        for (int i = 0; i < MAX_ENEMIES; i++) {
+            if (enemies[i].active) {
+                MoveEnemy(&enemies[i]);
+            }
+        }
+        usleep(50000); // Pequeña pausa para limitar la velocidad del movimiento
+    }
+    return NULL;
+}
+
+
+void *moveShip(void *data) {
+    Ship *ship = ((ThreadData *)data)->ship;
+    while (1) {
+        MoveShip(ship);
+        usleep(50000); // Pequeña pausa para limitar la velocidad del movimiento
+    }
+    return NULL;
+}
+
+// Función del hilo para mover el disparo
+void *moveShot(void *data) {
+    Shot *shot = ((ThreadData *)data)->shot;
+    Ship *ship= ((ThreadData *)data)->ship;
+    while (1) {
+        Fire(ship->x,ship->y,shot);
+        MoveShot(shot);
+        usleep(50000); // Pequeña pausa para limitar la velocidad del movimiento
+    }
+    return NULL;
+}
 
 int main() {
-    #define MAX_ENEMIES 3
     srand(time(NULL));
     Enemy enemies[MAX_ENEMIES];
-    // Inicializa los enemigos
     for (int i = 0; i < MAX_ENEMIES; i++) {
-    enemies[i].x = i * 10; // Posiciona los enemigos horizontalmente
-    enemies[i].y = 0; // Posiciona los enemigos en la parte superior de la pantalla
-    enemies[i].active = 1; // Marca los enemigos como activos
-    }   
+        enemies[i].x = i * 10;
+        enemies[i].y = 0;
+        enemies[i].active = 1;
+    }
 
     int x = 10, y = 10;
-    // Inicializa ncurses
     initscr();
     noecho();
     cbreak();
@@ -27,98 +71,36 @@ int main() {
     curs_set(0);
     raw();
     keypad(stdscr, TRUE);
-    // Inicializa la nave
+
     Ship ship = {x, y, 3};
     Shot shot = {0, 0, 0};
-    int seleccion = 0;
-    int opcion;
 
-    while(1) {
-        clear(); // Limpiar la ventana
-        mvprintw(1, 1, "  Bienvenido al juego de consola Matcom Invaders");
-        
-        if(seleccion == 0) attron(A_REVERSE); // Resaltar la opción seleccionada
-        mvprintw(2, 1, "Start Game");
-        attroff(A_REVERSE);
-        
-        if(seleccion == 1) attron(A_REVERSE); // Resaltar la opción seleccionada
-        mvprintw(3, 1, "About");
-        attroff(A_REVERSE);
-        
-        if(seleccion == 2) attron(A_REVERSE); // Resaltar la opción seleccionada
-        mvprintw(4, 1, "Exit");
-        attroff(A_REVERSE);
+    // Crear estructuras para pasar datos a las funciones del hilo
+    ThreadData enemyThreadData = {NULL, NULL, enemies};
+    ThreadData shipThreadData = {&ship, NULL, NULL};
+    ThreadData shotThreadData = {&ship, &shot, NULL};
 
-        refresh(); // Actualizar la ventanaf
+    pthread_t enemiesThread, shipThread, shotThread;
 
-        opcion = getch(); // Obtener la tecla presionada
+    clear();
+    DrawShip(&ship);
+    DrawLives(ship.lives);
 
-        if(opcion == KEY_UP) { // Mover la selección hacia arriba
-            seleccion--;
-        } 
-        else if (opcion == KEY_DOWN) { // Mover la selección hacia abajo
-            seleccion++;
-        } 
-        else if (opcion == 10) { // Si se presiona Enter
-            if(seleccion == 0) {
-                // Lógica para iniciar el juego
-                clear();
-                // Dibuja la nave y las vidas iniciales
-                DrawShip(&ship);
-                DrawLives(ship.lives);
-                // Bucle principal del juego
-                while (1) {
-                    int activeEnemies = 0;
-                    for (int i = 0; i < MAX_ENEMIES; i++) {
-                        if (enemies[i].active) {
-                            activeEnemies++;
-                        }
-                    }
+    // Crear hilos para mover enemigos, nave y disparo
+    pthread_create(&enemiesThread, NULL, moveEnemies, (void *)&enemyThreadData);
+    pthread_create(&shipThread, NULL, moveShip, (void *)&shipThreadData);
+    pthread_create(&shotThread, NULL, moveShot, (void *)&shotThreadData);
 
-                    if (activeEnemies == 0 && rand() % 100 < 2) { // chance en % de spawnear un enemigo
-                        int i = rand() % MAX_ENEMIES; // elegir un enemigo aleatorio
-                        enemies[i].x = rand() % COLS; // posicion aleatoria en x
-                        enemies[i].y = 0; // empezar en la parte superior de la pantalla
-                        enemies[i].active = 1; // activar el enemigo
-                    }
+    while (1) {
+        refresh();
+        usleep(50000); // Pequeña pausa para limitar la velocidad del bucle principal
+    }
 
-                    // mover y dibujar los enemigos
-                    for (int i = 0; i < MAX_ENEMIES; i++) {
-                        MoveEnemy(&enemies[i]);
-                    }
-                    int ch = getch();
-                    if (ch==27)
-                    {
-                        clear();
-                        printw("Game Over");
-                        refresh();
-                        getch();
-                        break;
-                    }
-                    MoveShip(&ship, &shot); // Mueve la nave y controla los disparos
-                    MoveShot(&shot,ship.x,ship.y);        // Mueve el disparo  
-                    refresh();      
-                }   
-            }
-            if(seleccion == 1) {
-                // Lógica para mostrar información del juego
-                clear();
-                mvprintw(1, 1, "Este es un juego creado para como proyecto final de la asignatura de Sistemas Operativos, es un juego del estilo clasico Alien Invaders");
-                refresh();
-                getch();
-            } 
-            if(seleccion == 2) {
-                break; // Salir del bucle
-            }
-        }
-        // Verificar límites de selección
-        if(seleccion < 0) {
-            seleccion = 2;
-        } 
-        else if (seleccion > 2) {
-            seleccion = 0;
-        }
-    }    
+    // Esperar a que los hilos terminen (esto nunca se ejecutará)
+    pthread_join(enemiesThread, NULL);
+    pthread_join(shipThread, NULL);
+    pthread_join(shotThread, NULL);
+
     endwin();
     return 0;
 }

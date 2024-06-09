@@ -11,6 +11,6 @@ typedef struct {
 void DrawShip(Ship* ship);
 void DeleteShip(Ship* ship);
 void DrawLives(int lives);
-void MoveShip(Ship* ship, Shot* shot);
+void MoveShip(Ship* ship);
 
 #endif /* SHIP_H */
